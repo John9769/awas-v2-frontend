@@ -105,31 +105,27 @@ export default function AdminPage() {
           </p>
         )}
 
-        {/* Stats */}
         {data && (
           <div className="grid grid-cols-2 gap-3">
             <Card>
               <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Insurers</p>
-              <p className="text-2xl font-bold text-brand-text">{data.totalInsurers ?? 0}</p>
+              <p className="text-2xl font-bold text-brand-text">{data.insurers?.total ?? 0}</p>
             </Card>
             <Card>
               <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Drivers</p>
-              <p className="text-2xl font-bold text-brand-text">{data.totalDrivers ?? 0}</p>
+              <p className="text-2xl font-bold text-brand-text">{data.drivers?.total ?? 0}</p>
             </Card>
             <Card>
               <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Total Writs</p>
-              <p className="text-2xl font-bold text-brand-text">{data.totalWrits ?? 0}</p>
+              <p className="text-2xl font-bold text-brand-text">{data.writs?.total ?? 0}</p>
             </Card>
             <Card>
-              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Revenue (RM)</p>
-              <p className="text-2xl font-bold text-brand-green">
-                {data.totalRevenue ? parseFloat(data.totalRevenue).toFixed(2) : '0.00'}
-              </p>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Unpaid Invoices</p>
+              <p className="text-2xl font-bold text-brand-red">{data.invoices?.unpaid ?? 0}</p>
             </Card>
           </div>
         )}
 
-        {/* Navigation */}
         <div className="flex flex-col gap-3">
           <Link href="/admin/insurers">
             <Card className="hover:border-brand-green transition-colors cursor-pointer">

@@ -107,7 +107,7 @@ export default function InsurerWritsPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {writs.map((writ) => (
-              <Link key={writ.writNumber} href={`/insurer/writs/${writ.writNumber}`}>
+              <Link key={writ.writNumber} href={`/insurer/writs/${writ.writNumber.replace(/\//g, '-')}`}>
                 <Card className="hover:border-brand-green transition-colors cursor-pointer">
                   <div className="flex items-start justify-between">
                     <div>
