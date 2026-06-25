@@ -100,15 +100,19 @@ export default function RecordPage() {
         </div>
 
         <div className="bg-white rounded-2xl border border-brand-border p-5">
-          <p className="text-sm font-semibold text-brand-text mb-3">Photos (optional)</p>
+          <p className="text-sm font-semibold text-brand-text mb-3">Photos — max 4 (optional)</p>
           <input
             type="file"
             accept="image/*"
+            capture="environment"
             multiple
-            onChange={(e) => setImages(Array.from(e.target.files))}
+            onChange={(e) => {
+              const files = Array.from(e.target.files).slice(0, 4)
+              setImages(files)
+            }}
             className="w-full text-sm text-brand-muted file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-brand-bg file:text-brand-text file:text-sm file:font-medium file:border file:border-brand-border"
           />
-          {images.length > 0 && <p className="text-xs text-brand-green mt-2">✓ {images.length} photo(s) selected</p>}
+          {images.length > 0 && <p className="text-xs text-brand-green mt-2">✓ {images.length}/4 photo(s) selected</p>}
         </div>
 
         <div className="bg-white rounded-2xl border border-brand-border p-5">
