@@ -13,7 +13,7 @@ export default function WritPage() {
 
   useEffect(() => {
     getWrit(writNumber)
-      .then((data) => setWrit(data.writ))
+      .then((data) => setWrit(data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [writNumber])

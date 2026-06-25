@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Card from '@/components/Card'
 import Navbar from '@/components/Navbar'
-import { getDriverProfile, getMyWrits } from '@/lib/api'
+import { getDriverProfile, getDriverHistory } from '@/lib/api'
 import { getDriverToken, removeDriverToken } from '@/lib/auth'
 
 export default function DriverDashboardPage() {
@@ -17,8 +17,8 @@ export default function DriverDashboardPage() {
   useEffect(() => {
     const token = getDriverToken()
     if (!token) { router.push('/login'); return }
-    Promise.all([getDriverProfile(token), getMyWrits(token)])
-      .then(([p, w]) => { setProfile(p.driver); setWrits(w.writs || []) })
+    Promise.all([getDriverProfile(token), getDriverHistory(token)])
+      .then(([p, w]) => { setProfile(p); setWrits(w.writs || []) })
       .catch((err) => { setError(err.message) })
       .finally(() => setLoading(false))
   }, [])
@@ -45,7 +45,6 @@ export default function DriverDashboardPage() {
           </p>
         )}
 
-        {/* Profile summary */}
         {profile && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">Your Vehicle</p>
@@ -63,7 +62,6 @@ export default function DriverDashboardPage() {
           </Card>
         )}
 
-        {/* Record accident CTA */}
         <Link href="/record">
           <div className="bg-brand-green rounded-2xl p-5 text-white cursor-pointer hover:opacity-95 transition-opacity">
             <p className="text-lg font-bold">Record Accident</p>
@@ -74,7 +72,6 @@ export default function DriverDashboardPage() {
           </div>
         </Link>
 
-        {/* Writ history */}
         <div>
           <p className="text-sm font-semibold text-brand-text mb-3">Your Writs ({writs.length})</p>
           {writs.length === 0 ? (

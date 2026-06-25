@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Button from '@/components/Button'
@@ -9,7 +9,6 @@ import { getDriverToken, removeDriverToken } from '@/lib/auth'
 
 export default function RecordPage() {
   const router = useRouter()
-  const videoRef = useRef(null)
   const [video, setVideo] = useState(null)
   const [images, setImages] = useState([])
   const [latitude, setLatitude] = useState('')
@@ -69,7 +68,8 @@ export default function RecordPage() {
       if (otherVehicleMakeModel) formData.append('otherVehicleMakeModel', otherVehicleMakeModel)
 
       const data = await sealWrit(token, formData)
-      router.push(`/writ/${data.writ.writNumber}`)
+      const slug = data.writNumber.replace(/\//g, '-')
+      router.push(`/writ/${slug}`)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -87,7 +87,6 @@ export default function RecordPage() {
           <p className="text-sm text-brand-muted mt-1">All evidence will be sealed with SHA-256 hash</p>
         </div>
 
-        {/* Video upload */}
         <div className="bg-white rounded-2xl border border-brand-border p-5">
           <p className="text-sm font-semibold text-brand-text mb-3">Video Evidence *</p>
           <input
@@ -100,7 +99,6 @@ export default function RecordPage() {
           {video && <p className="text-xs text-brand-green mt-2">✓ {video.name}</p>}
         </div>
 
-        {/* Images upload */}
         <div className="bg-white rounded-2xl border border-brand-border p-5">
           <p className="text-sm font-semibold text-brand-text mb-3">Photos (optional)</p>
           <input
@@ -113,7 +111,6 @@ export default function RecordPage() {
           {images.length > 0 && <p className="text-xs text-brand-green mt-2">✓ {images.length} photo(s) selected</p>}
         </div>
 
-        {/* Location */}
         <div className="bg-white rounded-2xl border border-brand-border p-5">
           <p className="text-sm font-semibold text-brand-text mb-3">Location *</p>
           {latitude && longitude ? (
@@ -124,7 +121,6 @@ export default function RecordPage() {
           </Button>
         </div>
 
-        {/* Incident details */}
         <div className="bg-white rounded-2xl border border-brand-border p-5 flex flex-col gap-4">
           <p className="text-sm font-semibold text-brand-text">Incident Details *</p>
 
@@ -187,7 +183,6 @@ export default function RecordPage() {
           </div>
         </div>
 
-        {/* Other vehicle */}
         <div className="bg-white rounded-2xl border border-brand-border p-5 flex flex-col gap-4">
           <p className="text-sm font-semibold text-brand-text">Other Vehicle (optional)</p>
           <Input
