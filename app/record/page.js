@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Button from '@/components/Button'
@@ -9,10 +9,14 @@ import { getDriverToken, removeDriverToken } from '@/lib/auth'
 
 export default function RecordPage() {
   const router = useRouter()
+  const videoInputRef = useRef(null)
+  const imageInputRef = useRef(null)
   const [video, setVideo] = useState(null)
   const [images, setImages] = useState([])
+  const [imagePreviews, setImagePreviews] = useState([])
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
+  const [locationStatus, setLocationStatus] = useState('getting')
   const [incidentDescription, setIncidentDescription] = useState('')
   const [roadCondition, setRoadCondition] = useState('')
   const [weatherCondition, setWeatherCondition] = useState('')
@@ -21,32 +25,49 @@ export default function RecordPage() {
   const [otherVehicleMakeModel, setOtherVehicleMakeModel] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [locationLoading, setLocationLoading] = useState(false)
 
   function handleLogout() {
     removeDriverToken()
     router.push('/login')
   }
 
-  function getLocation() {
-    setLocationLoading(true)
+  useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLatitude(pos.coords.latitude.toString())
         setLongitude(pos.coords.longitude.toString())
-        setLocationLoading(false)
+        setLocationStatus('done')
       },
       () => {
-        setError('Could not get location. Please enable GPS.')
-        setLocationLoading(false)
-      }
+        setLocationStatus('failed')
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
     )
+  }, [])
+
+  function handleVideoCapture(e) {
+    const file = e.target.files[0]
+    if (file) setVideo(file)
+  }
+
+  function handleImageCapture(e) {
+    const newFiles = Array.from(e.target.files)
+    const combined = [...images, ...newFiles].slice(0, 4)
+    setImages(combined)
+    setImagePreviews(combined.map((f) => URL.createObjectURL(f)))
+  }
+
+  function removeImage(index) {
+    const newImages = images.filter((_, i) => i !== index)
+    const newPreviews = imagePreviews.filter((_, i) => i !== index)
+    setImages(newImages)
+    setImagePreviews(newPreviews)
   }
 
   async function handleSubmit() {
     setError('')
     if (!video) return setError('Video is required.')
-    if (!latitude || !longitude) return setError('Location is required. Tap Get Location.')
+    if (locationStatus !== 'done') return setError('Location not captured. Please enable GPS and reload.')
     if (!incidentDescription) return setError('Describe the incident.')
     if (!roadCondition) return setError('Road condition is required.')
     if (!weatherCondition) return setError('Weather condition is required.')
@@ -69,7 +90,7 @@ export default function RecordPage() {
 
       const data = await sealWrit(token, formData)
       const slug = data.writNumber.replace(/\//g, '-')
-      router.push(`/writ/${slug}`)
+      router.push('/writ/' + slug)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -87,44 +108,78 @@ export default function RecordPage() {
           <p className="text-sm text-brand-muted mt-1">All evidence will be sealed with SHA-256 hash</p>
         </div>
 
+        {/* Location — auto captured */}
+        <div className={`rounded-2xl border p-4 ${locationStatus === 'done' ? 'bg-green-50 border-green-200' : locationStatus === 'failed' ? 'bg-red-50 border-red-200' : 'bg-white border-brand-border'}`}>
+          {locationStatus === 'getting' && <p className="text-sm text-brand-muted">📍 Getting your location...</p>}
+          {locationStatus === 'done' && <p className="text-sm text-brand-green font-medium">📍 Location captured: {parseFloat(latitude).toFixed(5)}, {parseFloat(longitude).toFixed(5)}</p>}
+          {locationStatus === 'failed' && <p className="text-sm text-brand-red font-medium">📍 Location failed. Enable GPS and reload page.</p>}
+        </div>
+
+        {/* Video */}
         <div className="bg-white rounded-2xl border border-brand-border p-5">
           <p className="text-sm font-semibold text-brand-text mb-3">Video Evidence *</p>
           <input
+            ref={videoInputRef}
             type="file"
             accept="video/*"
             capture="environment"
-            onChange={(e) => setVideo(e.target.files[0])}
-            className="w-full text-sm text-brand-muted file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-brand-green file:text-white file:text-sm file:font-medium"
+            onChange={handleVideoCapture}
+            className="hidden"
           />
-          {video && <p className="text-xs text-brand-green mt-2">✓ {video.name}</p>}
+          <button
+            onClick={() => videoInputRef.current.click()}
+            className="w-full py-4 rounded-xl border-2 border-dashed border-brand-green text-brand-green font-medium text-sm flex flex-col items-center gap-2"
+          >
+            <span className="text-3xl">🎥</span>
+            <span>{video ? 'Change Video' : 'Tap to Record Video'}</span>
+          </button>
+          {video && (
+            <p className="text-xs text-brand-green mt-2">✓ {video.name}</p>
+          )}
         </div>
 
+        {/* Images */}
         <div className="bg-white rounded-2xl border border-brand-border p-5">
           <p className="text-sm font-semibold text-brand-text mb-3">Photos — max 4 (optional)</p>
           <input
+            ref={imageInputRef}
             type="file"
             accept="image/*"
             capture="environment"
-            multiple
-            onChange={(e) => {
-              const files = Array.from(e.target.files).slice(0, 4)
-              setImages(files)
-            }}
-            className="w-full text-sm text-brand-muted file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-brand-bg file:text-brand-text file:text-sm file:font-medium file:border file:border-brand-border"
+            onChange={handleImageCapture}
+            className="hidden"
           />
-          {images.length > 0 && <p className="text-xs text-brand-green mt-2">✓ {images.length}/4 photo(s) selected</p>}
+          {images.length < 4 && (
+            <button
+              onClick={() => imageInputRef.current.click()}
+              className="w-full py-4 rounded-xl border-2 border-dashed border-brand-border text-brand-muted font-medium text-sm flex flex-col items-center gap-2 mb-3"
+            >
+              <span className="text-3xl">📷</span>
+              <span>Tap to Take Photo ({images.length}/4)</span>
+            </button>
+          )}
+          {imagePreviews.length > 0 && (
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              {imagePreviews.map((src, i) => (
+                <div key={i} className="relative">
+                  <img
+                    src={src}
+                    alt={'Photo ' + (i + 1)}
+                    className="w-full aspect-square object-cover rounded-xl"
+                  />
+                  <button
+                    onClick={() => removeImage(i)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-brand-red text-white rounded-full text-xs flex items-center justify-center font-bold"
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-brand-border p-5">
-          <p className="text-sm font-semibold text-brand-text mb-3">Location *</p>
-          {latitude && longitude ? (
-            <p className="text-xs text-brand-green mb-3">✓ Location captured: {parseFloat(latitude).toFixed(5)}, {parseFloat(longitude).toFixed(5)}</p>
-          ) : null}
-          <Button onClick={getLocation} variant="outline" disabled={locationLoading}>
-            {locationLoading ? 'Getting location...' : '📍 Get Current Location'}
-          </Button>
-        </div>
-
+        {/* Incident details */}
         <div className="bg-white rounded-2xl border border-brand-border p-5 flex flex-col gap-4">
           <p className="text-sm font-semibold text-brand-text">Incident Details *</p>
 
@@ -147,11 +202,11 @@ export default function RecordPage() {
               className="w-full px-4 py-3 rounded-xl border border-brand-border bg-white text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-green text-sm"
             >
               <option value="">Select condition</option>
-              <option value="Dry">Dry</option>
-              <option value="Wet">Wet</option>
-              <option value="Flooded">Flooded</option>
-              <option value="Under construction">Under construction</option>
-              <option value="Other">Other</option>
+              <option value="DRY">Dry</option>
+              <option value="WET">Wet</option>
+              <option value="FLOODED">Flooded</option>
+              <option value="UNDER_CONSTRUCTION">Under Construction</option>
+              <option value="UNKNOWN">Unknown</option>
             </select>
           </div>
 
@@ -163,11 +218,12 @@ export default function RecordPage() {
               className="w-full px-4 py-3 rounded-xl border border-brand-border bg-white text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-green text-sm"
             >
               <option value="">Select condition</option>
-              <option value="Clear">Clear</option>
-              <option value="Raining">Raining</option>
-              <option value="Heavy rain">Heavy rain</option>
-              <option value="Foggy">Foggy</option>
-              <option value="Other">Other</option>
+              <option value="CLEAR">Clear</option>
+              <option value="RAINY">Rainy</option>
+              <option value="FOGGY">Foggy</option>
+              <option value="HAZY">Hazy</option>
+              <option value="NIGHT">Night</option>
+              <option value="UNKNOWN">Unknown</option>
             </select>
           </div>
 
@@ -179,14 +235,14 @@ export default function RecordPage() {
               className="w-full px-4 py-3 rounded-xl border border-brand-border bg-white text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-green text-sm"
             >
               <option value="">Select status</option>
-              <option value="No injury">No injury</option>
-              <option value="Minor injury">Minor injury</option>
-              <option value="Serious injury">Serious injury</option>
-              <option value="Fatality">Fatality</option>
+              <option value="NONE">No Injury</option>
+              <option value="MINOR">Minor Injury</option>
+              <option value="SERIOUS">Serious Injury</option>
             </select>
           </div>
         </div>
 
+        {/* Other vehicle */}
         <div className="bg-white rounded-2xl border border-brand-border p-5 flex flex-col gap-4">
           <p className="text-sm font-semibold text-brand-text">Other Vehicle (optional)</p>
           <Input
