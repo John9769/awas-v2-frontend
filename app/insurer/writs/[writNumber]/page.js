@@ -50,7 +50,7 @@ export default function InsurerWritDetailPage() {
       <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-brand-text">Writ Detail</h2>
-          <Link href="/insurer/writs" className="text-sm text-brand-muted hover:underline">← Back</Link>
+          <Link href="/insurer/writs" className="text-sm text-brand-muted hover:underline">Back</Link>
         </div>
 
         <Card>
@@ -84,15 +84,9 @@ export default function InsurerWritDetailPage() {
         {writ.latitude && writ.longitude && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">Location</p>
-            <p className="text-sm text-brand-text">{parseFloat(writ.latitude).toFixed(5)}, {parseFloat(writ.longitude).toFixed(5)}</p>
-            
-              href={`https://maps.google.com/?q=${writ.latitude},${writ.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-brand-green hover:underline mt-1 block"
-            >
-              View on Google Maps →
-            </a>
+            <p className="text-sm text-brand-text">
+              {parseFloat(writ.latitude).toFixed(5)}, {parseFloat(writ.longitude).toFixed(5)}
+            </p>
           </Card>
         )}
 
@@ -144,11 +138,10 @@ export default function InsurerWritDetailPage() {
             </p>
             <div className="grid grid-cols-2 gap-2">
               {writ.imageUrls.map((url, i) => (
-                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   key={i}
                   src={url}
-                  alt={`Evidence ${i + 1}`}
+                  alt={"Evidence " + (i + 1)}
                   className="w-full rounded-xl object-cover aspect-square"
                 />
               ))}

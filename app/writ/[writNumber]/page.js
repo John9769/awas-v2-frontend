@@ -80,15 +80,9 @@ export default function WritPage() {
         {writ.latitude && writ.longitude && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">Location</p>
-            <p className="text-sm text-brand-text">{parseFloat(writ.latitude).toFixed(5)}, {parseFloat(writ.longitude).toFixed(5)}</p>
-            
-              href={`https://maps.google.com/?q=${writ.latitude},${writ.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-brand-green hover:underline mt-1 block"
-            >
-              View on Google Maps →
-            </a>
+            <p className="text-sm text-brand-text">
+              {parseFloat(writ.latitude).toFixed(5)}, {parseFloat(writ.longitude).toFixed(5)}
+            </p>
           </Card>
         )}
 
@@ -140,11 +134,10 @@ export default function WritPage() {
             </p>
             <div className="grid grid-cols-2 gap-2">
               {writ.imageUrls.map((url, i) => (
-                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   key={i}
                   src={url}
-                  alt={`Evidence ${i + 1}`}
+                  alt={"Evidence " + (i + 1)}
                   className="w-full rounded-xl object-cover aspect-square"
                 />
               ))}
