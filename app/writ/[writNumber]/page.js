@@ -42,10 +42,19 @@ export default function WritPage() {
           </div>
           <span className="font-semibold text-brand-text">AWAS</span>
         </div>
-        <Link href="/dashboard" className="text-sm text-brand-muted hover:underline">← Back</Link>
+        <Link href="/dashboard" className="text-sm text-brand-muted hover:underline">Back</Link>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 flex flex-col gap-5">
+
+        {/* Police Guidance */}
+        <div className="bg-brand-green rounded-2xl p-4">
+          <p className="text-white font-bold text-sm mb-1">Show this to the Police</p>
+          <p className="text-green-100 text-xs">Quote your writ number when making a police report. This document is SHA-256 sealed and tamper-proof. Your insurer has been automatically notified.</p>
+          <p className="text-white font-bold text-sm mt-2">{writ.writNumber}</p>
+        </div>
+
+        {/* Writ status */}
         <Card>
           <div className="flex items-start justify-between mb-3">
             <div>
@@ -66,26 +75,48 @@ export default function WritPage() {
           )}
         </Card>
 
+        {/* Hashes */}
         <Card>
-          <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">SHA-256 Log Hash</p>
+          <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">SHA-256 Master Hash</p>
           <p className="text-xs font-mono text-brand-text break-all">{writ.logHash}</p>
           {writ.videoHash && (
             <>
-              <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-2">Video Hash</p>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-1">Video Hash</p>
               <p className="text-xs font-mono text-brand-text break-all">{writ.videoHash}</p>
+            </>
+          )}
+          {writ.imageHashes && writ.imageHashes.length > 0 && (
+            <>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-1">Image Hashes</p>
+              {writ.imageHashes.map((hash, i) => (
+                <div key={i} className="mt-1">
+                  <p className="text-xs text-brand-muted">Photo {i + 1}</p>
+                  <p className="text-xs font-mono text-brand-text break-all">{hash}</p>
+                </div>
+              ))}
             </>
           )}
         </Card>
 
+        {/* Location with map */}
         {writ.latitude && writ.longitude && (
           <Card>
-            <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">Location</p>
-            <p className="text-sm text-brand-text">
+            <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">Accident Location</p>
+            <p className="text-sm text-brand-text mb-3">
               {parseFloat(writ.latitude).toFixed(5)}, {parseFloat(writ.longitude).toFixed(5)}
             </p>
+            <iframe
+              width="100%"
+              height="200"
+              style={{ border: 0, borderRadius: '12px' }}
+              loading="lazy"
+              allowFullScreen
+              src={"https://maps.google.com/maps?q=" + writ.latitude + "," + writ.longitude + "&z=16&output=embed"}
+            />
           </Card>
         )}
 
+        {/* Incident details */}
         <Card>
           <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">Incident Details</p>
           <div className="flex flex-col gap-2">
@@ -110,6 +141,7 @@ export default function WritPage() {
           </div>
         </Card>
 
+        {/* Other vehicle */}
         {writ.otherVehiclePlate && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">Other Vehicle</p>
@@ -120,6 +152,7 @@ export default function WritPage() {
           </Card>
         )}
 
+        {/* Video */}
         {writ.videoUrl && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">Video Evidence</p>
@@ -127,6 +160,7 @@ export default function WritPage() {
           </Card>
         )}
 
+        {/* Photos */}
         {writ.imageUrls && writ.imageUrls.length > 0 && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">

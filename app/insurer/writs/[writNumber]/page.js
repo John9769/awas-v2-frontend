@@ -53,6 +53,13 @@ export default function InsurerWritDetailPage() {
           <Link href="/insurer/writs" className="text-sm text-brand-muted hover:underline">Back</Link>
         </div>
 
+        {/* Fraud alert banner */}
+        <div className="bg-brand-green rounded-2xl p-4">
+          <p className="text-white font-bold text-sm mb-1">SHA-256 Sealed — Tamper Proof</p>
+          <p className="text-green-100 text-xs">This writ was automatically captured at the accident scene. All evidence is forensically sealed. Any tampering will invalidate the hash.</p>
+        </div>
+
+        {/* Writ + policyholder */}
         <Card>
           <div className="flex items-start justify-between mb-3">
             <div>
@@ -64,32 +71,61 @@ export default function InsurerWritDetailPage() {
             </span>
           </div>
           <p className="text-xs text-brand-muted">Vehicle: <span className="text-brand-text font-medium">{writ.vehiclePlate}</span></p>
+          {writ.driver && (
+            <>
+              <p className="text-xs text-brand-muted mt-1">Model: <span className="text-brand-text">{writ.driver.vehicleMakeModel}</span></p>
+              <p className="text-xs text-brand-muted mt-1">Policy: <span className="text-brand-text">{writ.driver.policyNumber}</span></p>
+              <p className="text-xs text-brand-muted mt-1">Phone: <span className="text-brand-text">{writ.driver.phone}</span></p>
+            </>
+          )}
           <p className="text-xs text-brand-muted mt-1">Recorded: {new Date(writ.createdAt).toLocaleString('en-MY')}</p>
           {writ.videoSealedAt && (
             <p className="text-xs text-brand-muted mt-1">Sealed: {new Date(writ.videoSealedAt).toLocaleString('en-MY')}</p>
           )}
         </Card>
 
+        {/* Hashes */}
         <Card>
-          <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">SHA-256 Log Hash</p>
+          <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">SHA-256 Master Hash</p>
           <p className="text-xs font-mono text-brand-text break-all">{writ.logHash}</p>
           {writ.videoHash && (
             <>
-              <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-2">Video Hash</p>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-1">Video Hash</p>
               <p className="text-xs font-mono text-brand-text break-all">{writ.videoHash}</p>
+            </>
+          )}
+          {writ.imageHashes && writ.imageHashes.length > 0 && (
+            <>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-1">Image Hashes</p>
+              {writ.imageHashes.map((hash, i) => (
+                <div key={i} className="mt-1">
+                  <p className="text-xs text-brand-muted">Photo {i + 1}</p>
+                  <p className="text-xs font-mono text-brand-text break-all">{hash}</p>
+                </div>
+              ))}
             </>
           )}
         </Card>
 
+        {/* Location with map */}
         {writ.latitude && writ.longitude && (
           <Card>
-            <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">Location</p>
-            <p className="text-sm text-brand-text">
+            <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">Accident Location</p>
+            <p className="text-sm text-brand-text mb-3">
               {parseFloat(writ.latitude).toFixed(5)}, {parseFloat(writ.longitude).toFixed(5)}
             </p>
+            <iframe
+              width="100%"
+              height="200"
+              style={{ border: 0, borderRadius: '12px' }}
+              loading="lazy"
+              allowFullScreen
+              src={"https://maps.google.com/maps?q=" + writ.latitude + "," + writ.longitude + "&z=16&output=embed"}
+            />
           </Card>
         )}
 
+        {/* Incident details */}
         <Card>
           <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">Incident Details</p>
           <div className="flex flex-col gap-2">
@@ -114,6 +150,7 @@ export default function InsurerWritDetailPage() {
           </div>
         </Card>
 
+        {/* Other vehicle */}
         {writ.otherVehiclePlate && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">Other Vehicle</p>
@@ -124,6 +161,7 @@ export default function InsurerWritDetailPage() {
           </Card>
         )}
 
+        {/* Video */}
         {writ.videoUrl && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">Video Evidence</p>
@@ -131,6 +169,7 @@ export default function InsurerWritDetailPage() {
           </Card>
         )}
 
+        {/* Photos */}
         {writ.imageUrls && writ.imageUrls.length > 0 && (
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">
