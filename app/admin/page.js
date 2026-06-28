@@ -110,18 +110,26 @@ export default function AdminPage() {
             <Card>
               <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Insurers</p>
               <p className="text-2xl font-bold text-brand-text">{data.insurers?.total ?? 0}</p>
+              <p className="text-xs text-brand-muted mt-1">{data.insurers?.active ?? 0} active</p>
             </Card>
             <Card>
               <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Drivers</p>
               <p className="text-2xl font-bold text-brand-text">{data.drivers?.total ?? 0}</p>
+              <p className="text-xs text-brand-muted mt-1">{data.drivers?.active ?? 0} active</p>
             </Card>
             <Card>
-              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Total Writs</p>
-              <p className="text-2xl font-bold text-brand-text">{data.writs?.total ?? 0}</p>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Submitted Writs</p>
+              <p className="text-2xl font-bold text-brand-green">{data.writs?.submitted ?? 0}</p>
+              <p className="text-xs text-brand-muted mt-1">{data.writs?.total ?? 0} total</p>
             </Card>
             <Card>
               <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Unpaid Invoices</p>
               <p className="text-2xl font-bold text-brand-red">{data.invoices?.unpaid ?? 0}</p>
+              <p className="text-xs text-brand-muted mt-1">{data.invoices?.total ?? 0} total</p>
+            </Card>
+            <Card>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Portal Users</p>
+              <p className="text-2xl font-bold text-brand-text">{data.insurerUsers?.total ?? 0}</p>
             </Card>
           </div>
         )}
@@ -132,7 +140,7 @@ export default function AdminPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-brand-text">Insurers</p>
-                  <p className="text-xs text-brand-muted mt-1">Manage insurer accounts</p>
+                  <p className="text-xs text-brand-muted mt-1">Manage insurer accounts + HOC users</p>
                 </div>
                 <span className="text-brand-muted">→</span>
               </div>
@@ -168,7 +176,7 @@ export default function AdminPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-brand-text">Invoices</p>
-                  <p className="text-xs text-brand-muted mt-1">Generate and manage invoices</p>
+                  <p className="text-xs text-brand-muted mt-1">Generate and manage AWAS invoices</p>
                 </div>
                 <span className="text-brand-muted">→</span>
               </div>

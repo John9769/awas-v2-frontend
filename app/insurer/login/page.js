@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Input from '@/components/Input'
 import Button from '@/components/Button'
 import { insurerLogin } from '@/lib/api'
-import { saveInsurerToken } from '@/lib/auth'
+import { saveInsurerToken, saveInsurerUser } from '@/lib/auth'
 
 export default function InsurerLoginPage() {
   const router = useRouter()
@@ -21,6 +21,7 @@ export default function InsurerLoginPage() {
     try {
       const data = await insurerLogin({ email, password })
       saveInsurerToken(data.token)
+      saveInsurerUser(data.insurerUser)
       if (data.mustChangePassword) {
         router.push('/insurer/change-password')
       } else {

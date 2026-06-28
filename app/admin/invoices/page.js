@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
-import { getAdminInvoices, generateInvoice, markInvoicePaid, getInsurers } from '@/lib/api'
+import { getAdminInvoices, generateWritInvoice, markInvoicePaid, getInsurers } from '@/lib/api'
 import { isAdminLoggedIn } from '@/lib/auth'
 
 export default function AdminInvoicesPage() {
@@ -40,8 +40,8 @@ export default function AdminInvoicesPage() {
     }
     setSubmitting(true)
     try {
-      await generateInvoice(form)
-      setSuccess('Invoice generated successfully.')
+      await generateWritInvoice(form)
+      setSuccess('Writ invoice generated successfully.')
       setForm({ insurerId: '', periodStart: '', periodEnd: '' })
       setShowForm(false)
       const res = await getAdminInvoices()
@@ -72,7 +72,7 @@ export default function AdminInvoicesPage() {
           </div>
           <span className="font-semibold text-brand-text">AWAS Admin</span>
         </div>
-        <Link href="/admin" className="text-sm text-brand-muted hover:underline">← Back</Link>
+        <Link href="/admin" className="text-sm text-brand-muted hover:underline">Back</Link>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
@@ -85,14 +85,13 @@ export default function AdminInvoicesPage() {
             onClick={() => setShowForm(!showForm)}
             className="px-4 py-2 bg-brand-green text-white rounded-xl text-sm font-medium hover:opacity-90"
           >
-            {showForm ? 'Cancel' : '+ Generate Invoice'}
+            {showForm ? 'Cancel' : '+ Generate Writ Invoice'}
           </button>
         </div>
 
-        {/* Generate invoice form */}
         {showForm && (
           <Card>
-            <p className="text-sm font-semibold text-brand-text mb-4">Generate Invoice</p>
+            <p className="text-sm font-semibold text-brand-text mb-4">Generate Writ Invoice</p>
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-brand-text">Insurer</label>
@@ -158,11 +157,15 @@ export default function AdminInvoicesPage() {
                   <div>
                     <p className="text-sm font-semibold text-brand-text">{invoice.invoiceNumber}</p>
                     <p className="text-xs text-brand-muted mt-1">{invoice.insurer?.name}</p>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-block mt-1 ${invoice.invoiceType === 'ONBOARDING' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                      {invoice.invoiceType === 'ONBOARDING' ? 'Onboarding' : 'Writ'}
+                    </span>
                     <p className="text-xs text-brand-muted mt-1">
-                      {new Date(invoice.periodStart).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })} —{' '}
-                      {new Date(invoice.periodEnd).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })}
+                      {new Date(invoice.periodStart).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
-                    <p className="text-xs text-brand-muted mt-1">{invoice.totalPolicies} policies</p>
+                    <p className="text-xs text-brand-muted mt-1">
+                      {invoice.totalUnits} {invoice.invoiceType === 'ONBOARDING' ? 'policies' : 'writs'} × RM{parseFloat(invoice.unitFee).toFixed(2)}
+                    </p>
                   </div>
                   <div className="text-right flex flex-col items-end gap-2">
                     <p className="text-sm font-bold text-brand-text">

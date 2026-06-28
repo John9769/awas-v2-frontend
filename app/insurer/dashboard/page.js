@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Card from '@/components/Card'
 import Navbar from '@/components/Navbar'
 import { getInsurerDashboard } from '@/lib/api'
-import { getInsurerToken, removeInsurerToken } from '@/lib/auth'
+import { getInsurerToken, removeInsurerToken, getInsurerUser, getInsurerRole } from '@/lib/auth'
 
 export default function InsurerDashboardPage() {
   const router = useRouter()
@@ -16,6 +16,13 @@ export default function InsurerDashboardPage() {
   useEffect(() => {
     const token = getInsurerToken()
     if (!token) { router.push('/insurer/login'); return }
+
+    // Role based redirect — dashboard is HOC only
+    const role = getInsurerRole()
+    if (role === 'BACKROOM') { router.push('/insurer/csv-upload'); return }
+    if (role === 'OFFICER') { router.push('/insurer/writs'); return }
+    if (role === 'ACCOUNTS') { router.push('/insurer/invoices'); return }
+
     getInsurerDashboard(token)
       .then((res) => setData(res))
       .catch((err) => setError(err.message))
@@ -33,6 +40,8 @@ export default function InsurerDashboardPage() {
     </div>
   )
 
+  const insurerUser = getInsurerUser()
+
   return (
     <div className="min-h-screen bg-brand-bg">
       <Navbar onLogout={handleLogout} />
@@ -48,7 +57,9 @@ export default function InsurerDashboardPage() {
         {data && (
           <div>
             <h2 className="text-lg font-bold text-brand-text">{data.insurer?.name}</h2>
-            <p className="text-sm text-brand-muted mt-1">Insurer Dashboard</p>
+            <p className="text-sm text-brand-muted mt-1">
+              Welcome, {insurerUser?.name} — Head of Claims
+            </p>
           </div>
         )}
 
@@ -64,18 +75,46 @@ export default function InsurerDashboardPage() {
               <p className="text-2xl font-bold text-brand-green">{data.activeDrivers ?? 0}</p>
             </Card>
             <Card>
-              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Total Writs</p>
-              <p className="text-2xl font-bold text-brand-text">{data.totalWrits ?? 0}</p>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Expiring (30 days)</p>
+              <p className="text-2xl font-bold text-yellow-600">{data.expiringDrivers ?? 0}</p>
             </Card>
             <Card>
-              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">This Month</p>
-              <p className="text-2xl font-bold text-brand-text">{data.writsThisMonth ?? 0}</p>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Unpaid Invoices</p>
+              <p className="text-2xl font-bold text-brand-red">{data.unpaidInvoices ?? 0}</p>
+            </Card>
+            <Card>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Total Writs</p>
+              <p className="text-2xl font-bold text-brand-text">{data.totalSubmittedWrits ?? 0}</p>
+            </Card>
+            <Card>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Writs This Month</p>
+              <p className="text-2xl font-bold text-brand-text">{data.submittedWritsMonth ?? 0}</p>
+            </Card>
+            <Card>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Writs Today</p>
+              <p className="text-2xl font-bold text-brand-green">{data.submittedWritsToday ?? 0}</p>
+            </Card>
+            <Card>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mb-1">Portal Users</p>
+              <p className="text-2xl font-bold text-brand-text">{data.totalUsers ?? 0}</p>
             </Card>
           </div>
         )}
 
-        {/* Navigation */}
+        {/* Navigation — HOC sees everything */}
         <div className="flex flex-col gap-3">
+          <Link href="/insurer/writs">
+            <Card className="hover:border-brand-green transition-colors cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-brand-text">Accident Writs</p>
+                  <p className="text-xs text-brand-muted mt-1">View all submitted forensic evidence</p>
+                </div>
+                <span className="text-brand-muted">→</span>
+              </div>
+            </Card>
+          </Link>
+
           <Link href="/insurer/policyholders">
             <Card className="hover:border-brand-green transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
@@ -88,24 +127,12 @@ export default function InsurerDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/insurer/writs">
-            <Card className="hover:border-brand-green transition-colors cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-brand-text">Accident Writs</p>
-                  <p className="text-xs text-brand-muted mt-1">View all sealed evidence records</p>
-                </div>
-                <span className="text-brand-muted">→</span>
-              </div>
-            </Card>
-          </Link>
-
           <Link href="/insurer/csv-upload">
             <Card className="hover:border-brand-green transition-colors cursor-pointer">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-brand-text">Upload Policyholders</p>
-                  <p className="text-xs text-brand-muted mt-1">Upload daily CSV to onboard drivers</p>
+                  <p className="text-xs text-brand-muted mt-1">Upload CSV to onboard drivers</p>
                 </div>
                 <span className="text-brand-muted">→</span>
               </div>
@@ -118,6 +145,18 @@ export default function InsurerDashboardPage() {
                 <div>
                   <p className="text-sm font-semibold text-brand-text">Invoices</p>
                   <p className="text-xs text-brand-muted mt-1">View monthly invoices from AWAS</p>
+                </div>
+                <span className="text-brand-muted">→</span>
+              </div>
+            </Card>
+          </Link>
+
+          <Link href="/insurer/users">
+            <Card className="hover:border-brand-green transition-colors cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-brand-text">Portal Users</p>
+                  <p className="text-xs text-brand-muted mt-1">Manage your team access</p>
                 </div>
                 <span className="text-brand-muted">→</span>
               </div>

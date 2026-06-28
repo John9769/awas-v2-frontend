@@ -37,7 +37,7 @@ export default function InsurerInvoicesPage() {
             <h2 className="text-lg font-bold text-brand-text">Invoices</h2>
             <p className="text-sm text-brand-muted mt-1">Monthly invoices from AWAS</p>
           </div>
-          <Link href="/insurer/dashboard" className="text-sm text-brand-muted hover:underline">← Back</Link>
+          <Link href="/insurer/dashboard" className="text-sm text-brand-muted hover:underline">Back</Link>
         </div>
 
         {error && (
@@ -59,11 +59,15 @@ export default function InsurerInvoicesPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-semibold text-brand-text">{invoice.invoiceNumber}</p>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-block mt-1 ${invoice.invoiceType === 'ONBOARDING' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                      {invoice.invoiceType === 'ONBOARDING' ? 'Onboarding' : 'Writ'}
+                    </span>
                     <p className="text-xs text-brand-muted mt-1">
-                      {new Date(invoice.periodStart).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })} —{' '}
-                      {new Date(invoice.periodEnd).toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })}
+                      {new Date(invoice.periodStart).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
-                    <p className="text-xs text-brand-muted mt-1">{invoice.totalPolicies} policies</p>
+                    <p className="text-xs text-brand-muted mt-1">
+                      {invoice.totalUnits} {invoice.invoiceType === 'ONBOARDING' ? 'policies' : 'writs'} × RM{parseFloat(invoice.unitFee).toFixed(2)}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-brand-text">

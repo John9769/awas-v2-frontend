@@ -53,7 +53,7 @@ export default function InsurerWritDetailPage() {
           <Link href="/insurer/writs" className="text-sm text-brand-muted hover:underline">Back</Link>
         </div>
 
-        {/* Fraud alert banner */}
+        {/* Forensic banner */}
         <div className="bg-brand-green rounded-2xl p-4">
           <p className="text-white font-bold text-sm mb-1">SHA-256 Sealed — Tamper Proof</p>
           <p className="text-green-100 text-xs">This writ was automatically captured at the accident scene. All evidence is forensically sealed. Any tampering will invalidate the hash.</p>
@@ -66,23 +66,44 @@ export default function InsurerWritDetailPage() {
               <p className="text-xs text-brand-muted uppercase tracking-wide">Writ Number</p>
               <p className="text-lg font-bold text-brand-text mt-1">{writ.writNumber}</p>
             </div>
-            <span className={`text-xs font-medium px-3 py-1 rounded-full ${writ.writStatus === 'SEALED' ? 'bg-green-100 text-brand-green' : 'bg-yellow-100 text-yellow-700'}`}>
-              {writ.writStatus}
+            <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-100 text-brand-green">
+              {writ.writStage}
             </span>
           </div>
+          {writ.claimType && (
+            <span className={`text-xs font-medium px-2 py-1 rounded-full inline-block mb-2 ${writ.claimType === 'OWN_DAMAGE' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+              {writ.claimType === 'OWN_DAMAGE' ? 'Own Damage' : 'Third Party'}
+            </span>
+          )}
           <p className="text-xs text-brand-muted">Vehicle: <span className="text-brand-text font-medium">{writ.vehiclePlate}</span></p>
           {writ.driver && (
             <>
               <p className="text-xs text-brand-muted mt-1">Model: <span className="text-brand-text">{writ.driver.vehicleMakeModel}</span></p>
               <p className="text-xs text-brand-muted mt-1">Policy: <span className="text-brand-text">{writ.driver.policyNumber}</span></p>
               <p className="text-xs text-brand-muted mt-1">Phone: <span className="text-brand-text">{writ.driver.phone}</span></p>
+              <p className="text-xs text-brand-muted mt-1">Email: <span className="text-brand-text">{writ.driver.email}</span></p>
             </>
           )}
           <p className="text-xs text-brand-muted mt-1">Recorded: {new Date(writ.createdAt).toLocaleString('en-MY')}</p>
-          {writ.videoSealedAt && (
-            <p className="text-xs text-brand-muted mt-1">Sealed: {new Date(writ.videoSealedAt).toLocaleString('en-MY')}</p>
+          {writ.submittedAt && (
+            <p className="text-xs text-brand-muted mt-1">Submitted: {new Date(writ.submittedAt).toLocaleString('en-MY')}</p>
           )}
         </Card>
+
+        {/* Rebate info */}
+        {writ.writRebate && (
+          <Card>
+            <p className="text-xs text-brand-muted uppercase tracking-wide mb-2">Rebate Entitlement</p>
+            <p className="text-sm font-semibold text-brand-green">
+              {writ.writRebate.rebateType === 'PERCENTAGE'
+                ? `${writ.writRebate.rebateValue}% off next renewal`
+                : `RM${writ.writRebate.rebateValue} off next renewal`}
+            </p>
+            <p className="text-xs text-brand-muted mt-1">
+              Status: {writ.writRebate.isApplied ? 'Applied' : 'Pending next renewal'}
+            </p>
+          </Card>
+        )}
 
         {/* Hashes */}
         <Card>
@@ -94,12 +115,29 @@ export default function InsurerWritDetailPage() {
               <p className="text-xs font-mono text-brand-text break-all">{writ.videoHash}</p>
             </>
           )}
+          {writ.audioHash && (
+            <>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-1">Audio Hash</p>
+              <p className="text-xs font-mono text-brand-text break-all">{writ.audioHash}</p>
+            </>
+          )}
           {writ.imageHashes && writ.imageHashes.length > 0 && (
             <>
               <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-1">Image Hashes</p>
               {writ.imageHashes.map((hash, i) => (
                 <div key={i} className="mt-1">
                   <p className="text-xs text-brand-muted">Photo {i + 1}</p>
+                  <p className="text-xs font-mono text-brand-text break-all">{hash}</p>
+                </div>
+              ))}
+            </>
+          )}
+          {writ.otherVehicleImageHashes && writ.otherVehicleImageHashes.length > 0 && (
+            <>
+              <p className="text-xs text-brand-muted uppercase tracking-wide mt-3 mb-1">Other Vehicle Image Hashes</p>
+              {writ.otherVehicleImageHashes.map((hash, i) => (
+                <div key={i} className="mt-1">
+                  <p className="text-xs text-brand-muted">Other Photo {i + 1}</p>
                   <p className="text-xs font-mono text-brand-text break-all">{hash}</p>
                 </div>
               ))}
@@ -158,6 +196,18 @@ export default function InsurerWritDetailPage() {
             {writ.otherVehicleMakeModel && (
               <p className="text-sm text-brand-muted mt-1">{writ.otherVehicleMakeModel}</p>
             )}
+            {writ.otherVehicleImageUrls && writ.otherVehicleImageUrls.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                {writ.otherVehicleImageUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={"Other vehicle " + (i + 1)}
+                    className="w-full rounded-xl object-cover aspect-square"
+                  />
+                ))}
+              </div>
+            )}
           </Card>
         )}
 
@@ -166,6 +216,14 @@ export default function InsurerWritDetailPage() {
           <Card>
             <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">Video Evidence</p>
             <video controls className="w-full rounded-xl" src={writ.videoUrl} />
+          </Card>
+        )}
+
+        {/* Audio */}
+        {writ.audioUrl && (
+          <Card>
+            <p className="text-xs text-brand-muted uppercase tracking-wide mb-3">Audio Recording</p>
+            <audio controls className="w-full" src={writ.audioUrl} />
           </Card>
         )}
 

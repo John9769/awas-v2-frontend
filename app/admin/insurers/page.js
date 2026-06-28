@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
-import { getInsurers, createInsurer, toggleInsurerStatus } from '@/lib/api'
+import { getInsurers, createInsurer, toggleInsurerStatus, createHocUser, getAdminInsurerUsers } from '@/lib/api'
 import { isAdminLoggedIn } from '@/lib/auth'
 
 export default function AdminInsurersPage() {
@@ -15,10 +15,10 @@ export default function AdminInsurersPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [showHocForm, setShowHocForm] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-  const [form, setForm] = useState({
-    name: '', code: '', email: '', contactPerson: '', phone: ''
-  })
+  const [form, setForm] = useState({ name: '', code: '', email: '', contactPerson: '', phone: '' })
+  const [hocForm, setHocForm] = useState({ name: '', email: '' })
 
   useEffect(() => {
     if (!isAdminLoggedIn()) { router.push('/admin'); return }
@@ -44,11 +44,28 @@ export default function AdminInsurersPage() {
     }
     setSubmitting(true)
     try {
-      await createInsurer(form)
-      setSuccess('Insurer created. Temp password emailed.')
+      const res = await createInsurer(form)
+      setSuccess(`Insurer ${form.name} created. Now create HOC user for them.`)
       setForm({ name: '', code: '', email: '', contactPerson: '', phone: '' })
       setShowForm(false)
       fetchInsurers()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleCreateHoc(insurerId) {
+    setError('')
+    setSuccess('')
+    if (!hocForm.name || !hocForm.email) return setError('Name and email required.')
+    setSubmitting(true)
+    try {
+      await createHocUser({ insurerId, name: hocForm.name, email: hocForm.email })
+      setSuccess(`HOC user created. Welcome email sent.`)
+      setHocForm({ name: '', email: '' })
+      setShowHocForm(null)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -74,7 +91,7 @@ export default function AdminInsurersPage() {
           </div>
           <span className="font-semibold text-brand-text">AWAS Admin</span>
         </div>
-        <Link href="/admin" className="text-sm text-brand-muted hover:underline">← Back</Link>
+        <Link href="/admin" className="text-sm text-brand-muted hover:underline">Back</Link>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
@@ -98,20 +115,19 @@ export default function AdminInsurersPage() {
             <div className="flex flex-col gap-3">
               <Input label="Company Name" id="name" value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="e.g. Etiqa Insurance" />
+                placeholder="e.g. Takaful Malaysia" />
               <Input label="Code" id="code" value={form.code}
                 onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
-                placeholder="e.g. ETIQA" />
-              <Input label="Email" id="email" type="email" value={form.email}
+                placeholder="e.g. TAKAFUL" />
+              <Input label="Company Email" id="email" type="email" value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="contact@etiqa.com" />
+                placeholder="contact@takaful.com.my" />
               <Input label="Contact Person" id="contactPerson" value={form.contactPerson}
                 onChange={(e) => setForm({ ...form, contactPerson: e.target.value })}
                 placeholder="Full name" />
               <Input label="Phone" id="phone" value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder="e.g. 0123456789" />
-
               {error && (
                 <p className="text-sm text-brand-red bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                   {error}
@@ -129,9 +145,15 @@ export default function AdminInsurersPage() {
           </Card>
         )}
 
-        {error && !showForm && (
+        {error && !showForm && !showHocForm && (
           <p className="text-sm text-brand-red bg-red-50 border border-red-200 rounded-xl px-4 py-3">
             {error}
+          </p>
+        )}
+
+        {success && !showForm && !showHocForm && (
+          <p className="text-sm text-brand-green bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            ✓ {success}
           </p>
         )}
 
@@ -144,27 +166,69 @@ export default function AdminInsurersPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {insurers.map((insurer) => (
-              <Card key={insurer.id}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-brand-text">{insurer.name}</p>
-                    <p className="text-xs text-brand-muted mt-1">{insurer.code}</p>
-                    <p className="text-xs text-brand-muted mt-1">{insurer.email}</p>
-                    <p className="text-xs text-brand-muted mt-1">{insurer.contactPerson} · {insurer.phone}</p>
+              <div key={insurer.id} className="flex flex-col gap-2">
+                <Card>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-brand-text">{insurer.name}</p>
+                      <p className="text-xs text-brand-muted mt-1">{insurer.code}</p>
+                      <p className="text-xs text-brand-muted mt-1">{insurer.email}</p>
+                      <p className="text-xs text-brand-muted mt-1">{insurer.contactPerson} · {insurer.phone}</p>
+                      <p className="text-xs text-brand-muted mt-1">
+                        RM{parseFloat(insurer.onboardingFee).toFixed(2)}/policy · RM{parseFloat(insurer.writFee).toFixed(2)}/writ
+                      </p>
+                      <p className="text-xs text-brand-muted mt-1">
+                        {insurer._count?.drivers ?? 0} drivers · {insurer._count?.insurerUsers ?? 0} portal users
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${insurer.status === 'ACTIVE' ? 'bg-green-100 text-brand-green' : 'bg-red-100 text-brand-red'}`}>
+                        {insurer.status}
+                      </span>
+                      <button
+                        onClick={() => handleToggle(insurer.id)}
+                        className="text-xs text-brand-muted hover:text-brand-red underline"
+                      >
+                        {insurer.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => setShowHocForm(showHocForm === insurer.id ? null : insurer.id)}
+                        className="text-xs text-brand-green underline"
+                      >
+                        + Create HOC User
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${insurer.status === 'ACTIVE' ? 'bg-green-100 text-brand-green' : 'bg-red-100 text-brand-red'}`}>
-                      {insurer.status}
-                    </span>
-                    <button
-                      onClick={() => handleToggle(insurer.id)}
-                      className="text-xs text-brand-muted hover:text-brand-red underline"
-                    >
-                      {insurer.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                    </button>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+
+                {/* HOC creation form inline */}
+                {showHocForm === insurer.id && (
+                  <Card>
+                    <p className="text-sm font-semibold text-brand-text mb-3">Create HOC for {insurer.name}</p>
+                    <div className="flex flex-col gap-3">
+                      <Input label="HOC Full Name" id="hocName" value={hocForm.name}
+                        onChange={(e) => setHocForm({ ...hocForm, name: e.target.value })}
+                        placeholder="Head of Claims name" />
+                      <Input label="HOC Email" id="hocEmail" type="email" value={hocForm.email}
+                        onChange={(e) => setHocForm({ ...hocForm, email: e.target.value })}
+                        placeholder="hoc@insurer.com" />
+                      {error && (
+                        <p className="text-sm text-brand-red bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                          {error}
+                        </p>
+                      )}
+                      {success && (
+                        <p className="text-sm text-brand-green bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                          ✓ {success}
+                        </p>
+                      )}
+                      <Button onClick={() => handleCreateHoc(insurer.id)} disabled={submitting}>
+                        {submitting ? 'Creating...' : 'Create HOC User'}
+                      </Button>
+                    </div>
+                  </Card>
+                )}
+              </div>
             ))}
           </div>
         )}

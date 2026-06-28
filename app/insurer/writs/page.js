@@ -6,7 +6,7 @@ import Card from '@/components/Card'
 import Navbar from '@/components/Navbar'
 import Input from '@/components/Input'
 import { getInsurerWrits } from '@/lib/api'
-import { getInsurerToken, removeInsurerToken } from '@/lib/auth'
+import { getInsurerToken, removeInsurerToken, getInsurerRole } from '@/lib/auth'
 
 export default function InsurerWritsPage() {
   const router = useRouter()
@@ -14,6 +14,7 @@ export default function InsurerWritsPage() {
   const [vehiclePlate, setVehiclePlate] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [claimType, setClaimType] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -28,13 +29,14 @@ export default function InsurerWritsPage() {
     fetchWrits(token)
   }, [])
 
-  async function fetchWrits(token, plate = '', from = '', to = '') {
+  async function fetchWrits(token, plate = '', from = '', to = '', type = '') {
     setLoading(true)
     try {
       const params = new URLSearchParams()
       if (plate) params.append('vehiclePlate', plate.toUpperCase())
       if (from) params.append('dateFrom', from)
       if (to) params.append('dateTo', to)
+      if (type) params.append('claimType', type)
       const res = await getInsurerWrits(token, params.toString() ? `?${params.toString()}` : '')
       setWrits(res.writs || [])
     } catch (err) {
@@ -46,8 +48,10 @@ export default function InsurerWritsPage() {
 
   function handleSearch() {
     const token = getInsurerToken()
-    fetchWrits(token, vehiclePlate, dateFrom, dateTo)
+    fetchWrits(token, vehiclePlate, dateFrom, dateTo, claimType)
   }
+
+  const role = getInsurerRole()
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -57,9 +61,11 @@ export default function InsurerWritsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-brand-text">Accident Writs</h2>
-            <p className="text-sm text-brand-muted mt-1">{writs.length} records</p>
+            <p className="text-sm text-brand-muted mt-1">{writs.length} submitted writ(s)</p>
           </div>
-          <Link href="/insurer/dashboard" className="text-sm text-brand-muted hover:underline">← Back</Link>
+          {role === 'HOC' && (
+            <Link href="/insurer/dashboard" className="text-sm text-brand-muted hover:underline">Back</Link>
+          )}
         </div>
 
         {/* Filters */}
@@ -83,6 +89,17 @@ export default function InsurerWritsPage() {
               onChange={(e) => setDateTo(e.target.value)}
               className="flex-1 px-3 py-3 rounded-xl border border-brand-border bg-white text-brand-text text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
             />
+          </div>
+          <div className="flex gap-2">
+            <select
+              value={claimType}
+              onChange={(e) => setClaimType(e.target.value)}
+              className="flex-1 px-3 py-3 rounded-xl border border-brand-border bg-white text-brand-text text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+            >
+              <option value="">All Claim Types</option>
+              <option value="OWN_DAMAGE">Own Damage</option>
+              <option value="THIRD_PARTY">Third Party</option>
+            </select>
             <button
               onClick={handleSearch}
               className="px-4 py-3 bg-brand-green text-white rounded-xl text-sm font-medium hover:opacity-90"
@@ -102,7 +119,7 @@ export default function InsurerWritsPage() {
           <p className="text-sm text-brand-muted text-center py-8">Loading...</p>
         ) : writs.length === 0 ? (
           <Card>
-            <p className="text-sm text-brand-muted text-center py-4">No writs found.</p>
+            <p className="text-sm text-brand-muted text-center py-4">No submitted writs found.</p>
           </Card>
         ) : (
           <div className="flex flex-col gap-3">
@@ -113,15 +130,22 @@ export default function InsurerWritsPage() {
                     <div>
                       <p className="text-sm font-semibold text-brand-text">{writ.writNumber}</p>
                       <p className="text-xs text-brand-muted mt-1">{writ.vehiclePlate}</p>
+                      {writ.claimType && (
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block ${writ.claimType === 'OWN_DAMAGE' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                          {writ.claimType === 'OWN_DAMAGE' ? 'Own Damage' : 'Third Party'}
+                        </span>
+                      )}
                       <p className="text-xs text-brand-muted mt-1">
-                        {new Date(writ.createdAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {writ.submittedAt
+                          ? new Date(writ.submittedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+                          : new Date(writ.createdAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </p>
                       {writ.incidentDescription && (
                         <p className="text-xs text-brand-muted mt-1 line-clamp-1">{writ.incidentDescription}</p>
                       )}
                     </div>
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${writ.writStatus === 'SEALED' ? 'bg-green-100 text-brand-green' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {writ.writStatus}
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${writ.writStage === 'SUBMITTED' ? 'bg-green-100 text-brand-green' : 'bg-yellow-100 text-yellow-700'}`}>
+                      {writ.writStage}
                     </span>
                   </div>
                 </Card>

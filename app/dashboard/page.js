@@ -86,15 +86,22 @@ export default function DriverDashboardPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm font-semibold text-brand-text">{writ.writNumber}</p>
+                        {writ.claimType && (
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block ${writ.claimType === 'OWN_DAMAGE' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                            {writ.claimType === 'OWN_DAMAGE' ? 'Own Damage' : 'Third Party'}
+                          </span>
+                        )}
                         <p className="text-xs text-brand-muted mt-1">
-                          {new Date(writ.createdAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {writ.submittedAt
+                            ? new Date(writ.submittedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : new Date(writ.createdAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                         {writ.incidentDescription && (
                           <p className="text-xs text-brand-muted mt-1 line-clamp-1">{writ.incidentDescription}</p>
                         )}
                       </div>
-                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${writ.writStatus === 'SEALED' ? 'bg-green-100 text-brand-green' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {writ.writStatus}
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${writ.writStage === 'SUBMITTED' ? 'bg-green-100 text-brand-green' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {writ.writStage}
                       </span>
                     </div>
                   </Card>
