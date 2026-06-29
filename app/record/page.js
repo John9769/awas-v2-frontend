@@ -34,6 +34,7 @@ export default function RecordPage() {
   const [otherVehicleMakeModel, setOtherVehicleMakeModel] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState('')
+  const [audioError, setAudioError] = useState('')
   const [loading, setLoading] = useState(false)
 
   function handleLogout() {
@@ -102,7 +103,7 @@ export default function RecordPage() {
       setMediaRecorder(recorder)
       setIsRecordingAudio(true)
     } catch (err) {
-      setError('Microphone access denied.')
+      setAudioError('Microphone access denied. Audio is optional — you may skip it.')
     }
   }
 
@@ -248,6 +249,9 @@ export default function RecordPage() {
         <div className="bg-white rounded-2xl border border-brand-border p-5">
           <p className="text-sm font-semibold text-brand-text mb-3">Audio Recording (optional)</p>
           <p className="text-xs text-brand-muted mb-3">Record a voice description of the accident scene. Anyone at the scene may speak with your permission.</p>
+          {audioError && (
+            <p className="text-xs text-brand-red mb-2">{audioError}</p>
+          )}
           {!audio ? (
             <button
               onClick={isRecordingAudio ? stopAudioRecording : startAudioRecording}
