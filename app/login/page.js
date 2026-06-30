@@ -33,7 +33,7 @@ export default function DriverLoginPage() {
   }
 
   return (
-    <div className="min-h-screen relative flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen relative flex flex-col items-center justify-start pt-16 px-4">
       {/* Video background */}
       <video
         autoPlay
@@ -48,7 +48,7 @@ export default function DriverLoginPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/70" />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-xs flex flex-col items-center gap-8">
+      <div className="relative z-10 w-full max-w-xs flex flex-col items-center gap-6">
         {/* AWAS branding */}
         <div className="text-center">
           <h1 className="text-5xl font-bold text-white tracking-widest drop-shadow-lg">AWAS</h1>
